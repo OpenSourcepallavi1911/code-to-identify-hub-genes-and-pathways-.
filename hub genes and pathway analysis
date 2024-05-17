@@ -1,0 +1,160 @@
+# Check current working directory
+getwd()
+
+# Load CSV file
+hcc_data <- read.csv("C:/Users/Admin/Desktop/hcc_data.csv", header = TRUE)
+
+t2dm_data <- read.csv("C:/Users/Admin/Desktop/t2dm_data.csv", header = TRUE)
+
+str(hcc_data)
+str(t2dm_data)
+# Load necessary packages
+install.packages("ggplot2")  # Install ggplot2 package if you haven't already
+install.packages("VennDiagram")  # Install VennDiagram package if you haven't already
+library(ggplot2)
+library(VennDiagram)
+
+# Step 1: Identify DEGs using GEO2R (Assuming you have obtained DEGs and stored them in hcc_degs and t2dm_degs dataframes)
+
+# Step 2: Filter DEGs based on cutoff criteria
+hcc_degs_filtered <- hcc_data[hcc_data$P.Value < 0.05 & abs(hcc_data$logFC) > 1.0, ]
+t2dm_degs_filtered <- t2dm_data[t2dm_data$P.Value < 0.05 & abs(t2dm_data$logFC) > 1.0, ]
+
+
+# Get gene IDs of DEGs for HCC dataset
+hcc_genes <- hcc_degs_filtered$Gene.symbol
+
+# Get gene IDs of DEGs for T2DM dataset
+t2dm_genes <- t2dm_degs_filtered$Gene.symbol
+
+library(VennDiagram)
+
+# Get gene IDs of DEGs for HCC dataset
+hcc_genes <- hcc_degs_filtered$Gene.symbol
+
+# Get gene IDs of DEGs for T2DM dataset
+t2dm_genes <- t2dm_degs_filtered$Gene.symbol
+  
+shared_gene<-intersect(hcc_genes,t2dm_genes)
+# Create Venn diagram using gene IDs
+venn <- venn.diagram(
+  x = list(HCC = hcc_genes, T2DM = t2dm_genes),
+  category.names = c("HCC", "T2DM"),
+  filename = NULL
+)
+
+
+# Plot Venn diagram
+grid.draw(venn_counts)
+
+# Step 5: Determine common DEGs shared between HCC and T2DM datasets
+shared_genes <- intersect(hcc_genes, t2dm_genes)
+
+# Step 6: Save the list of shared gene names to a supplementary file
+write.csv(shared_genes, file = "shared_genes.csv", row.names = FALSE)
+# Step 5: Determine the count of common DEGs shared between HCC and T2DM datasets
+shared_genes_count <- length(shared_genes)
+
+deg_data <- read.csv("C:/Users/Admin/Desktop/shared_degs.csv", header = TRUE)
+str(deg_data)
+# Extract the DEGs column from the data frame
+DEGs <- deg_data$Gene.symbol
+# Install and load the enrichR package
+install.packages("enrichR")
+library(enrichR)
+
+# Step 2: Submit DEGs to Enrichr
+# Example using enrichr function
+enrichr_results <- enrichr(genes = DEGs, databases = c("GO_Biological_Process_2018", "GO_Cellular_Component_2018", "GO_Molecular_Function_2018", "KEGG_2019_Human"))
+
+# Step 3: Retrieve enrichment results
+# Extract the GO and KEGG pathways enrichment results
+go_results <- enrichr_results$GO_Biological_Process_2018
+cc_results <- enrichr_results$GO_Cellular_Component_2018
+mf_results <- enrichr_results$GO_Molecular_Function_2018
+kegg_results <- enrichr_results$KEGG_2019_Human
+
+# Step 4: Process and filter the enrichment results (if necessary)
+
+# Step 5: Interpret and visualize the enriched terms
+# Example: Plot top enriched terms
+barplot(-log10(go_results$P.Value), names.arg = go_results$Term, las = 2, main = "GO Biological Process Enrichment", xlab = "GO Term", ylab = "-log10(P-value)")
+str(go_results)
+go_results$P.value <- as.numeric(go_results$P.value)
+barplot(-log10(go_results$P.value), names.arg = go_results$Term, las = 2, main = "GO Biological Process Enrichment", xlab = "-log10(p-value)", ylab = "Term")
+
+# Convert P.value column to numeric
+go_results$P.value <- as.numeric(go_results$P.value)
+
+# Define colors based on significance levels
+colors <- ifelse(go_results$P.value < 0.05, "purple", "black")
+
+
+# Create barplot with color-coded bars
+barplot(-log10(go_results$P.value),
+        names.arg = go_results$Term,
+        col = colors,  # Set bar colors based on significance
+        las = 2,
+        main = "GO Biological Process Enrichment",
+        xlab = "Term",
+        ylab = "-log10(P-value)")
+
+
+# Load required libraries
+library(ggplot2)
+
+# Load required libraries
+library(ggplot2)
+
+# Create function to plot enrichment results with top N terms
+plot_enrichment <- function(results, title, top_n = 10) {
+  # Check if results is a data frame
+  if (!is.data.frame(results)) {
+    stop("Input 'results' must be a data frame")
+  }
+  
+  # Check if 'P.value' column exists in results
+  if (!"P.value" %in% colnames(results)) {
+    stop("Input 'results' must contain a 'P.value' column")
+  }
+  
+  # Order results by p-value and select top N terms
+  results <- results[order(results$P.value), ]
+  top_results <- head(results, n = top_n)
+  
+  # Plot bar chart
+  p <- ggplot(top_results, aes(x = Term, y = -log10(P.value))) +
+    geom_bar(stat = "identity", fill = "blue", width = 0.5) +
+    labs(x = "Term", y = "-log10(p-value)", title = title) +
+    theme(axis.text.y = element_text(size = 8)) +  # Adjust text size for better visibility
+    coord_flip()  # Flip the coordinates to change the orientation of the plot
+  
+  return(p)
+}
+
+# Plot GO Biological Process results
+go_plot <- plot_enrichment(go_results, "GO Biological Process Enrichment")
+print(go_plot)
+
+
+# View the structure of go_results
+str(go_results)
+
+
+# Plot GO Cellular Component results
+cc_plot <- plot_enrichment(cc_results, "GO Cellular Component Enrichment")
+print(cc_plot)
+
+# Plot GO Molecular Function results
+mf_plot <- plot_enrichment(mf_results, "GO Molecular Function Enrichment")
+print(mf_plot)
+
+# Plot KEGG pathway results
+kegg_plot <- plot_enrichment(kegg_results, "KEGG Pathway Enrichment")
+print(kegg_plot)
+
+
+
+
+
+
